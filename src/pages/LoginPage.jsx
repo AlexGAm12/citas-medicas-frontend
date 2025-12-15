@@ -23,11 +23,16 @@ export default function LoginPage() {
     }
   }, [isAuthenticated, user, navigate]);
 
-  const onSubmit = handleSubmit(async (data) => {
-    await signin(data);
-  });
-
   const useCaptcha = Boolean(import.meta.env.VITE_RECAPTCHA_SITE_KEY);
+
+  const onSubmit = handleSubmit(async (data) => {
+    await signin({
+      ...data,
+      captchaToken: useCaptcha ? captchaValue : undefined,
+    });
+    // opcional: reset captcha
+    // setCaptchaValue(null);
+  });
 
   return (
     <div className="max-w-md mx-auto mt-10 bg-zinc-800 p-6 rounded-lg">
@@ -43,23 +48,19 @@ export default function LoginPage() {
 
       <form onSubmit={onSubmit} className="flex flex-col gap-3">
         <input
-          className="p-2 rounded text-white bg-zinc-900/60 border border-white/10 outline-none placeholder:text-white/40 [text-shadow:none] [filter:none] [-webkit-text-fill-color:currentColor]"
+          className="p-2 rounded text-white bg-zinc-900/60 border border-white/10 outline-none placeholder:text-white/40"
           placeholder="Email"
           {...register("email", { required: "Email requerido" })}
         />
-        {fErrors.email && (
-          <span className="text-red-300">{fErrors.email.message}</span>
-        )}
+        {fErrors.email && <span className="text-red-300">{fErrors.email.message}</span>}
 
         <input
-          className="p-2 rounded text-white bg-zinc-900/60 border border-white/10 outline-none placeholder:text-white/40 [text-shadow:none] [filter:none] [-webkit-text-fill-color:currentColor]"
+          className="p-2 rounded text-white bg-zinc-900/60 border border-white/10 outline-none placeholder:text-white/40"
           placeholder="Password"
           type="password"
           {...register("password", { required: "Password requerido" })}
         />
-        {fErrors.password && (
-          <span className="text-red-300">{fErrors.password.message}</span>
-        )}
+        {fErrors.password && <span className="text-red-300">{fErrors.password.message}</span>}
 
         {useCaptcha && (
           <ReCAPTCHA

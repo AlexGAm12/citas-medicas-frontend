@@ -1,7 +1,7 @@
 import { useForm } from "react-hook-form";
 import { useAuth } from "../context/AuthContext";
 import ReCAPTCHA from "react-google-recaptcha";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { IoEyeOutline, IoEyeOffOutline } from "react-icons/io5";
 
@@ -9,6 +9,7 @@ export default function RegisterPage() {
   const { signup, errors } = useAuth();
   const navigate = useNavigate();
 
+  const recaptchaRef = useRef(null);
   const [captchaValue, setCaptchaValue] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showPassword2, setShowPassword2] = useState(false);
@@ -32,7 +33,10 @@ export default function RegisterPage() {
   useMemo(() => {
     if (!password2) return;
     if (password !== password2) {
-      setError("password2", { type: "validate", message: "Las contraseñas no coinciden" });
+      setError("password2", {
+        type: "validate",
+        message: "Las contraseñas no coinciden",
+      });
     } else {
       clearErrors("password2");
     }
@@ -40,7 +44,15 @@ export default function RegisterPage() {
 
   const onSubmit = handleSubmit(async (data) => {
     if (data.password !== data.password2) {
-      setError("password2", { type: "validate", message: "Las contraseñas no coinciden" });
+      setError("password2", {
+        type: "validate",
+        message: "Las contraseñas no coinciden",
+      });
+      return;
+    }
+
+    if (useCaptcha && !captchaValue) {
+      setError("root", { type: "captcha", message: "Completa el captcha" });
       return;
     }
 
@@ -49,7 +61,13 @@ export default function RegisterPage() {
       email: data.email,
       password: data.password,
       role: data.role,
+      captchaToken: useCaptcha ? captchaValue : undefined, 
     });
+
+    if (useCaptcha) {
+      recaptchaRef.current?.reset?.();
+      setCaptchaValue(null);
+    }
 
     navigate("/login");
   });
@@ -69,20 +87,30 @@ export default function RegisterPage() {
         </div>
       )}
 
+      {fErrors.root?.message && (
+        <div className="bg-red-500 text-white p-2 rounded mb-3">
+          {fErrors.root.message}
+        </div>
+      )}
+
       <form onSubmit={onSubmit} className="flex flex-col gap-3">
         <input
           className={inputBase}
           placeholder="Username"
           {...register("username", { required: "Username requerido" })}
         />
-        {fErrors.username && <span className="text-red-300">{fErrors.username.message}</span>}
+        {fErrors.username && (
+          <span className="text-red-300">{fErrors.username.message}</span>
+        )}
 
         <input
           className={inputBase}
           placeholder="Email"
           {...register("email", { required: "Email requerido" })}
         />
-        {fErrors.email && <span className="text-red-300">{fErrors.email.message}</span>}
+        {fErrors.email && (
+          <span className="text-red-300">{fErrors.email.message}</span>
+        )}
 
         <div className="relative">
           <input
@@ -96,10 +124,16 @@ export default function RegisterPage() {
             onClick={() => setShowPassword((v) => !v)}
             className="absolute right-2 top-1/2 -translate-y-1/2 text-white/70 hover:text-white"
           >
-            {showPassword ? <IoEyeOffOutline size={20} /> : <IoEyeOutline size={20} />}
+            {showPassword ? (
+              <IoEyeOffOutline size={20} />
+            ) : (
+              <IoEyeOutline size={20} />
+            )}
           </button>
         </div>
-        {fErrors.password && <span className="text-red-300">{fErrors.password.message}</span>}
+        {fErrors.password && (
+          <span className="text-red-300">{fErrors.password.message}</span>
+        )}
 
         <div className="relative">
           <input
@@ -113,19 +147,32 @@ export default function RegisterPage() {
             onClick={() => setShowPassword2((v) => !v)}
             className="absolute right-2 top-1/2 -translate-y-1/2 text-white/70 hover:text-white"
           >
-            {showPassword2 ? <IoEyeOffOutline size={20} /> : <IoEyeOutline size={20} />}
+            {showPassword2 ? (
+              <IoEyeOffOutline size={20} />
+            ) : (
+              <IoEyeOutline size={20} />
+            )}
           </button>
         </div>
-        {fErrors.password2 && <span className="text-red-300">{fErrors.password2.message}</span>}
+        {fErrors.password2 && (
+          <span className="text-red-300">{fErrors.password2.message}</span>
+        )}
 
         <select className={inputBase} {...register("role", { required: true })}>
-          <option value="paciente" className="bg-zinc-900">Paciente</option>
-          <option value="doctor" className="bg-zinc-900">Doctor</option>
-          <option value="admin" className="bg-zinc-900">Admin</option>
+          <option value="paciente" className="bg-zinc-900">
+            Paciente
+          </option>
+          <option value="doctor" className="bg-zinc-900">
+            Doctor
+          </option>
+          <option value="admin" className="bg-zinc-900">
+            Admin
+          </option>
         </select>
 
         {useCaptcha && (
           <ReCAPTCHA
+            ref={recaptchaRef}
             sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
             onChange={(val) => setCaptchaValue(val)}
           />
