@@ -62,16 +62,16 @@ export default function LoginPage() {
           <span className="text-red-300">{fErrors.password.message}</span>
         )}
 
-        {/*useCaptcha && (
+        {useCaptcha && (
           <ReCAPTCHA
             sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
             onChange={(val) => setCaptchaValue(val)}
           />
-        )*/}
+        )}
 
         <button
           className="bg-blue-600 text-white p-2 rounded disabled:opacity-50"
-          //disabled={useCaptcha && !captchaValue}
+          disabled={useCaptcha && !captchaValue}
         >
           Entrar
         </button>
